@@ -1,28 +1,20 @@
-# import re
-# import nltk
-# from time import time
-# from emoji import demojize
-# import os
-# import sys
-# from pathlib import Path
+
 from pathlib import Path
 import pandas as pd
-# from nlp import Dataset
 import pickle
 import numpy as np
-# from tensorflow.keras.preprocessing.text import Tokenizer
-# from sklearn.model_selection import train_test_split
 from tensorflow.keras.layers import Input, Embedding, SpatialDropout1D, LSTM
 from tensorflow.keras.layers import GlobalAveragePooling1D, GlobalMaxPooling1D
 from tensorflow.keras.layers import Bidirectional, Conv1D, Dense, concatenate
 from tensorflow.keras.models import Model
 from tensorflow.keras.preprocessing.sequence import pad_sequences
-# from sklearn.preprocessing import LabelBinarizer
-
+from tensorflow import keras
+import random
+orig = './output'
 # print(os.getcwd())
 
 # ------------------------load tokenizer------------------------
-tokenizer_path=Path('D:/PycharmProjects/chatbot/tokenizer.pickle').resolve()
+tokenizer_path=Path('D:/PycharmProjects/chatbot/tokenizer_2.pickle').resolve()
 with tokenizer_path.open('rb') as file:
   tokenizer=pickle.load(file)
 
@@ -30,7 +22,7 @@ with tokenizer_path.open('rb') as file:
 
 input_dim = min(tokenizer.num_words, len(tokenizer.word_index) + 1)
 # num_classes = len(df['label'].unique())
-num_classes=13
+num_classes=5
 embedding_dim = 500
 input_length = 100
 lstm_units = 128
@@ -65,9 +57,9 @@ output_layer = Dense(num_classes, activation='softmax')(output_layer)
 model = Model(input_layer, output_layer)
 # ---------------------------------------------------------
 
-model_weights_path=Path('D:/PycharmProjects/chatbot/model_2epc_13cl.h5').resolve()
+model_weights_path=Path('D:/PycharmProjects/chatbot/model_with_weight.h5').resolve()
 model.load_weights(model_weights_path.as_posix())
-
+# model = keras.models.load_model('D:/PycharmProjects/chatbot/model_with_weight.h5')
 # -------------------------loading test set------------------------------------
 test_df = pd.read_csv('D:/PycharmProjects/chatbot/test.csv')
 # ---------------------preprocess test befor applying the model----------------
@@ -75,16 +67,45 @@ sequences = [text.split() for text in test_df.Text]
 list_tokenized= tokenizer.texts_to_sequences(sequences)
 x_data= pad_sequences(list_tokenized, maxlen=input_length)
 # ----------------------load the encoder----------------------------------------
-encoder_path=Path('D:/PycharmProjects/chatbot/encoder.pickle').resolve()
+encoder_path=Path('D:/PycharmProjects/chatbot/encoder_2.pickle').resolve()
 with encoder_path.open('rb') as file:
   encoder=pickle.load(file)
 # -------------------predict emotions of test set -------------------------------
+def call_model(input):
+    print(input)
+    sequences = input.split()
+    list_tokenized = tokenizer.texts_to_sequences(sequences)
+    x_data = pad_sequences(list_tokenized, maxlen=input_length)
+    y_pred = model.predict(x_data)
+    #y_pred_argmax=y_pred.argmax(axis=1)
+    #data_len = len(y_pred_argmax)
+    # print(data_len)
+    emotions=[]
+    values = []
+    max_pred=0
+    for index, value in enumerate(np.sum(y_pred,axis=0)/len(y_pred)):
+        #print(encoder.classes_[index] + ": " + str(len(y_pred_argmax[y_pred_argmax == value]) / data_len))
+        print(encoder.classes_[index] + ": " + str(value))
+        # if (len(y_pred_argmax[y_pred_argmax == value]) / data_len) > max_pred:
+        #     max_pred =  (len(y_pred_argmax[y_pred_argmax == value]) / data_len)
+        #     emotions.append([encoder.classes_[index],str(len(y_pred_argmax[y_pred_argmax == value]) / data_len)])
+        emotions.append(encoder.classes_[index])
+        values.append(value)
+    # encoder.classes_[index]
+    print('emotion:',emotions)
+    index = values.index(max(values))
+    print(emotions[index])
+    return(emotions[index])
+# ----------------------------------------------------------------
+def fetch_answer(emotion):
+    print('emotion:', emotion)
+    if emotion == 'other':
+        return "OK"
+    path = orig + "/" + emotion + ".txt"
+    with open(path, 'r') as f:
+        res = (f.readlines())
+        num = random.randint(0, len(res))
 
-y_pred=model.predict(x_data)
-# for index, value in enumerate(np.sum(y_pred, axis=0)/len(y_pred)):
-#   print(encoder.classes_[index]+": "+ str(value))
-
-y_pred_argmax = y_pred.argmax(axis=1)
-data_len = len(y_pred_argmax)
-for index, value in enumerate(np.unique(y_pred_argmax)):
-  print(encoder.classes_[index] + ": " + str(len(y_pred_argmax[y_pred_argmax == value]) / data_len))
+    f.close
+    print(res[num])
+    return (res[num])

@@ -1,5 +1,7 @@
 from tkinter import *
 
+from response import call_model, fetch_answer
+
 root = Tk()
 root.title("Chat Bot")
 root.geometry("400x500")
@@ -22,11 +24,12 @@ main_menu.add_command(label="Quit")
 root.config(menu=main_menu)
 def send_fun():
     res = messageWindow.get("1.0","end")
-    #resp = call_model(res)
+    emotion = call_model(res)
     res = "[You]: " + res
-    #resp = "[Bot] : " + resp
+    resp ="[Bot] : " + fetch_answer(emotion)
+    # resp = "[Bot] : " + emotion
     chatWindow.insert(END, res )
-    #chatWindow.insert(END, resp )
+    chatWindow.insert(END, resp )
     messageWindow.delete("1.0","end")
 
 
