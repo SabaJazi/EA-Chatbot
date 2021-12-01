@@ -15,8 +15,10 @@ This code base needs the following libraries and packages to run:
 - random
 - textblob
 - time
-## files needed to run GUI:
+## Files needed to run GUI:
 1. saved model weights
 2. saved tokenizer
 3. saved encoder
 4. output folder including answere datasets as text(matching classified emotions)
+## model trained for final result:
+LSTM + CNN
