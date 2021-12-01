@@ -1,4 +1,4 @@
-# EA-Chatbot
+# Emotion Aware Chatbot
 NLP class project: emotion aware chatbot trained on twitter dataset
 
 This code base needs the following libraries and packages to run:
